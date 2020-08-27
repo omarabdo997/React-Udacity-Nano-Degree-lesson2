@@ -69,6 +69,30 @@ function goals (state = [], action) {
             return state ;    
     }
 }
+const checker = (store) => (next) => (action) => {
+    if (action.type === ADD_TODO && 
+        action.todo.name.toLowerCase().includes('bitcoin')
+    ) {
+        return alert("nope that's a bad request")
+    }
+    return next(action)
+}
+const logger = (store) => (next) => (action) => {
+    console.group(action.type)
+        console.log('the action: ', action)
+        const result = next(action)
+        console.log('the new state: ',store.getState())
+    console.groupEnd()
+    return result
+}
+const greatGoal = (store) => (next) => (action) => {
+    if (action.type === ADD_GOAL) {
+        alert("That's a GREAT GOAL !")
+    } else if (action.type === ADD_TODO) {
+        alert(`Don't forget to ${action.todo.name}`)
+    }
+    return next(action)
+}
 
 function app (state = {}, action) {
     return {
@@ -79,10 +103,9 @@ function app (state = {}, action) {
 const store = Redux.createStore(Redux.combineReducers({
     todos,
     goals
-}))
+}), Redux.applyMiddleware(checker, logger, greatGoal))
 const unsubscribe = store.subscribe(() => {
     const {todos, goals} = store.getState()
-    console.log(store.getState())
     document.getElementById('todos').innerHTML= ''
     document.getElementById('goals').innerHTML = ''
     todos.forEach((todo) => addTodoDOM(todo))
