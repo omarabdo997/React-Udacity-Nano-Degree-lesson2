@@ -94,73 +94,7 @@ const greatGoal = (store) => (next) => (action) => {
     return next(action)
 }
 
-function app (state = {}, action) {
-    return {
-        todos: todos(state.todos, action),
-        goals: goals(state.goals, action)
-    }
-}
 const store = Redux.createStore(Redux.combineReducers({
     todos,
     goals
 }), Redux.applyMiddleware(checker, logger, greatGoal))
-const unsubscribe = store.subscribe(() => {
-    const {todos, goals} = store.getState()
-    document.getElementById('todos').innerHTML= ''
-    document.getElementById('goals').innerHTML = ''
-    todos.forEach((todo) => addTodoDOM(todo))
-    goals.forEach((goal) => addGoalDOM(goal))
-})
-
-
-
-function addTodo () {
-    const input = document.getElementById('todo')
-    const name = input.value
-    input.value = ''
-    store.dispatch(addTodoAction(generateId(), name, false))
-}
-
-function addGoal () {
-    const input = document.getElementById('goal')
-    const name = input.value
-    input.value = ''
-    store.dispatch(addGoalAction(generateId(), name))
-}
-const todoButton = document.getElementById('todoButton')
-const goalButton = document.getElementById('goalButton')
-todoButton.addEventListener('click', addTodo)
-goalButton.addEventListener('click', addGoal)
-
-function lineThrough (id) {
-    store.dispatch(toggleTodoAction(id))
-}
-function addRemoveButton (onClick) {
-    button = document.createElement('button');
-    button.innerHTML = 'X';
-    button.addEventListener('click', onClick)
-    return button;
-
-}
-function addTodoDOM (todo) {
-    const li = document.createElement('li');
-    const inner = document.createTextNode(todo.name)
-    if (todo.completed) {
-        const strike = document.createElement('strike')
-        strike.appendChild(inner)
-        li.appendChild(strike)
-    } else {
-        li.appendChild(inner)
-    }
-    const button = addRemoveButton(() => store.dispatch(removeTodoAction(todo.id)));
-    li.appendChild(button)
-    li.addEventListener('click', () => lineThrough(todo.id))
-    document.getElementById('todos').appendChild(li);
-}
-function addGoalDOM (goal) {
-    const li = document.createElement('li');
-    li.innerHTML = `${goal.name}`;
-    const button = addRemoveButton(() => store.dispatch(removeGoalAction(goal.id)));
-    li.appendChild(button)
-    document.getElementById('goals').appendChild(li);
-}
