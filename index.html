@@ -5,12 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Udacity Redux Lesson</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/3.7.2/redux.min.js"></script>
+    <script src="https://unpkg.com/react@16.3.0-alpha.1/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@16.3.0-alpha.1/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
 </head>
 <body>
    <div>
         <h1>Todo List</h1>
         <input id='todo' type="text" placeholder="Add Todo"/>
-        <input id='todoButton' type="button" value="Add Todo">
+        <input id='todoButton' type="button" value="Add Todo"/>
         <ul id='todos'></ul>
    </div> 
    <div>
@@ -18,8 +21,109 @@
         <input id='goal' type="text" placeholder="Add Goal"/>
         <input id='goalButton' type="button" value="Add Goal">
         <ul id='goals'></ul>
-    </div> 
+    </div>
+    <hr/>
+    <div id='app'></div>
     
 </body>
 <script src="store.js"></script>
+<script type="text/babel">
+    function List (props) {
+        const {remove, items, toggle} = props
+        return (
+            <ul>
+                {items.map(item => (
+                    <li key={item.id}>
+                        <span
+                            onClick={() => (toggle?toggle(item.id):'none')}
+                            style={{textDecoration: item.completed?'line-through':'none'}}
+                        >{item.name}</span>
+                        <button
+                            onClick={() => remove(item.id)}
+                        >X</button>
+                    </li>
+                ))}
+            </ul>
+        )
+    }
+    class Todos extends React.Component {
+        handleClick = (e) => {
+            const name = this.input.value;
+            this.props.store.dispatch(addTodoAction(generateId(),name,false))
+            this.input.value = '';
+        }
+        remove = (id) => {
+            this.props.store.dispatch(removeTodoAction(id))
+        }
+        toggle = (id) => {
+            this.props.store.dispatch(toggleTodoAction(id))
+        }
+        render () {
+            return (
+                <div>
+                    <h1>TODOS</h1>
+                    <input 
+                        type='text'
+                        placeholder='Add Todo'
+                        ref={(input) => {this.input = input}} 
+                    />
+                    <input
+                        type='button' 
+                        value='Add Todo'
+                        onClick={this.handleClick}
+                    />
+                    <List items = {this.props.todos} remove={this.remove} toggle={this.toggle}/>
+                </div>
+            )
+        }
+    }
+    class Goals extends React.Component {
+        handleClick = (e) => {
+            const name = this.input.value
+            this.input.value = ''
+            this.props.store.dispatch(addGoalAction(generateId(),name))
+        }
+        remove = (id) => {
+            this.props.store.dispatch(removeGoalAction(id))
+        }
+        render() {
+            return (
+                <div>
+                    <h1>GOALS</h1>
+                    <input
+                        type='text'
+                        placeholder='Add Goal'
+                        ref={(input) => this.input=input}
+                    />
+                    <button
+                        onClick={this.handleClick}
+                    >Add Goal
+                    </button>
+                    <List items={this.props.goals} remove={this.remove}/>
+                </div>
+            )
+        }
+    }
+    class App extends React.Component {
+        componentDidMount () {
+            const {sotre} = this.props.store
+            store.subscribe(() => this.forceUpdate())
+        }
+        render() {
+            const {store} = this.props
+            const {todos, goals} = store.getState()
+            return (
+                <div>
+                    <Todos todos={todos} store={store}/>
+                    <Goals goals={goals} store={store}/>
+                </div>
+            )
+        }
+    }
+    ReactDOM.render(
+        <App store={store}/>,
+        document.getElementById('app')
+    )
+
+</script>
 </html>
