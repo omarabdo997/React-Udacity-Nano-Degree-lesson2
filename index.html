@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/react@16.3.0-alpha.1/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@16.3.0-alpha.1/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+    <script src="https://tylermcginnis.com/goals-todos-api/index.js"></script>
 </head>
 <body>
     <div id='app'></div>
@@ -23,10 +24,10 @@
                     <li key={item.id}>
                         <span
                             onClick={() => (toggle?toggle(item.id):'none')}
-                            style={{textDecoration: item.completed?'line-through':'none'}}
+                            style={{textDecoration: item.complete?'line-through':'none'}}
                         >{item.name}</span>
                         <button
-                            onClick={() => remove(item.id)}
+                            onClick={() => remove(item)}
                         >X</button>
                     </li>
                 ))}
@@ -36,14 +37,28 @@
     class Todos extends React.Component {
         handleClick = (e) => {
             const name = this.input.value;
-            this.props.store.dispatch(addTodoAction(generateId(),name,false))
-            this.input.value = '';
+            API.saveTodo(name)
+                .then(todo => {
+                    this.props.store.dispatch(addTodoAction(todo.id,todo.name,todo.complete))
+                    this.input.value = '';
+                })
+                .catch(() => alert('An error occured'))
         }
-        remove = (id) => {
-            this.props.store.dispatch(removeTodoAction(id))
+        remove = (todo) => {
+            this.props.store.dispatch(removeTodoAction(todo.id))
+            API.deleteTodo(todo.id)
+                .catch(() => {
+                    this.props.store.dispatch(addTodoAction(todo.id, todo.name, todo.complete));
+                    alert('an error occured')
+                })
         }
         toggle = (id) => {
             this.props.store.dispatch(toggleTodoAction(id))
+            API.saveTodoToggle(id)
+                .catch(() => {
+                    this.props.store.dispatch(toggleTodoAction(id));
+                    alert('A error occured try again..')
+                })
         }
         render () {
             return (
@@ -67,11 +82,20 @@
     class Goals extends React.Component {
         handleClick = (e) => {
             const name = this.input.value
-            this.input.value = ''
-            this.props.store.dispatch(addGoalAction(generateId(),name))
+            API.saveGoal(name)
+                .then(goal => {
+                    this.props.store.dispatch(addGoalAction(goal.id,goal.name,goal.complete))
+                    this.input.value = '';
+                })
+                .catch(() => alert('An error occured'))
         }
-        remove = (id) => {
-            this.props.store.dispatch(removeGoalAction(id))
+        remove = (goal) => {
+            this.props.store.dispatch(removeGoalAction(goal.id))
+            API.deleteGoal(goal.id)
+                .catch(() => {
+                    this.props.store.dispatch(addGoalAction(goal.id,goal.name));
+                    alert('An error occured')
+                })
         }
         render() {
             return (
@@ -93,12 +117,22 @@
     }
     class App extends React.Component {
         componentDidMount () {
-            const {sotre} = this.props.store
-            store.subscribe(() => this.forceUpdate())
+            const {store} = this.props
+            store.subscribe(() => this.forceUpdate());
+            Promise.all([
+                API.fetchTodos(),
+                API.fetchGoals()
+            ]).then(([todos, goals]) => {
+                store.dispatch(recieveDataAction(todos, goals))
+            })
+            
         }
         render() {
             const {store} = this.props
-            const {todos, goals} = store.getState()
+            const {todos, goals, loading} = store.getState()
+            if (loading === true) {
+                return <h3>LOADING...</h3>
+            }
             return (
                 <div>
                     <Todos todos={todos} store={store}/>

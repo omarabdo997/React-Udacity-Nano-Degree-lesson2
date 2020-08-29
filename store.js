@@ -6,13 +6,21 @@ const REMOVE_TODO = 'REMOVE_TODO';
 const TOGGLE_TODO = 'TOGGLE_TODO';
 const REMOVE_GOAL = 'REMOVE_GOAL';
 const ADD_GOAL = 'ADD_GOAL';
-function addTodoAction (id, name, completed) {
+const RECIEVE_DATA = 'RECIEVE_DATA';
+function recieveDataAction(todos, goals) {
+    return {
+        type: RECIEVE_DATA,
+        todos,
+        goals
+    }
+}
+function addTodoAction (id, name, complete) {
     return {
         type: ADD_TODO,
         todo: {
             id,
             name,
-            completed
+            complete
         }
     }
 }
@@ -52,9 +60,11 @@ function todos (state = [], action) {
             return state.filter((todo) => todo.id !== action.id);
         case TOGGLE_TODO:
             return state.map((todo) => {
-                if (todo.id === action.id) todo.completed = !todo.completed;
+                if (todo.id === action.id) todo.complete = !todo.complete;
                 return todo;
             })
+        case RECIEVE_DATA:
+            return action.todos    
         default:
             return state ;                       
     }
@@ -65,9 +75,21 @@ function goals (state = [], action) {
             return state.concat([action.goal]);
         case  REMOVE_GOAL:
             return state.filter((goal) => goal.id !== action.id);
+        case RECIEVE_DATA:
+            return action.goals        
         default:
             return state ;    
     }
+}
+function loading (state=true, action) {
+    switch (action.type) {
+        case RECIEVE_DATA:
+            return false
+        default:
+            return state    
+    }
+
+
 }
 const checker = (store) => (next) => (action) => {
     if (action.type === ADD_TODO && 
@@ -93,8 +115,8 @@ const greatGoal = (store) => (next) => (action) => {
     }
     return next(action)
 }
-
 const store = Redux.createStore(Redux.combineReducers({
     todos,
-    goals
-}), Redux.applyMiddleware(checker, logger, greatGoal))
+    goals,
+    loading
+}), Redux.applyMiddleware(checker, logger))
