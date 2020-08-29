@@ -51,7 +51,67 @@ function removeGoalAction(id) {
         id
     }
 }
-
+function handelDeleteGoal(goal) {
+    return (dispatch) => {
+        dispatch(removeGoalAction(goal.id))
+        API.deleteGoal(goal.id)
+            .catch(() => {
+                dispatch(addGoalAction(goal.id,goal.name));
+                alert('An error occured')
+            })
+    }
+}
+function handleDeleteTodo(todo) {
+    return (dispatch) => {
+        dispatch(removeTodoAction(todo.id))
+        API.deleteTodo(todo.id)
+        .catch(() => {
+            dispatch(addTodoAction(todo.id, todo.name, todo.complete));
+            alert('an error occured')
+        })
+    }
+     
+}
+function handleAddTodo(name, cb) {
+    return (dispatch) => {
+        API.saveTodo(name)
+            .then(todo => {
+                dispatch(addTodoAction(todo.id,todo.name,todo.complete))
+                cb();
+            })
+            .catch(() => alert('An error occured'))
+    }
+}
+function handleAddGoal(name, cb) {
+    return (dispatch) => {
+        API.saveGoal(name)
+            .then(goal => {
+                dispatch(addGoalAction(goal.id,goal.name,goal.complete))
+                cb();
+            })
+            .catch(() => alert('An error occured'))
+    }
+}
+function handleToggleTodo (id) {
+    return (dispatch) => {
+        dispatch(toggleTodoAction(id))
+        API.saveTodoToggle(id)
+            .catch(() => {
+                dispatch(toggleTodoAction(id));
+                alert('A error occured try again..')
+            })
+    }
+}
+function handleInitialData() {
+    return (dispatch) => {
+        Promise.all([
+            API.fetchTodos(),
+            API.fetchGoals()
+        ]).then(([todos, goals]) => {
+            dispatch(recieveDataAction(todos, goals))
+        })
+    }
+}
 function todos (state = [], action) {
     switch (action.type) {
         case ADD_TODO:
@@ -115,8 +175,15 @@ const greatGoal = (store) => (next) => (action) => {
     }
     return next(action)
 }
+const thunk = (store) => (next) => (action) => {
+    if(typeof action == 'function') {
+        return action(store.dispatch)
+    } else {
+        return next(action)
+    }
+}
 const store = Redux.createStore(Redux.combineReducers({
     todos,
     goals,
     loading
-}), Redux.applyMiddleware(checker, logger))
+}), Redux.applyMiddleware(ReduxThunk.default, checker, logger))
